@@ -5,17 +5,15 @@ title:  "Win32 API Callstack"
 date:   2023-11-16 17:01:57 +0100
 ---
 
-# Win32 API Callstack
-
 This blog post will walk through the complete call stack process of calling a Win32 API function and how it transitions to the low-level hard drive driver. This project is compiled with Visual Studio 2022 and run on a standard Windows 11 system.
 
 The API function that will be tested is [CreateFileW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew).
 
-## The difference between CreateFileA and CreateFileW
+# The difference between CreateFileA and CreateFileW
 
 In terms of using the Win32 API function, the only difference between the two is the lpFileName variable type. When specifying CreateFile in Visual Studio, it will default to the wide version of the function if there is an ANSII or Wide version. The Windows kernel works with wide characters so if you use CreateFileA, the contents of the lpFileName parameter will be converted to wide characters before the transition to kernel mode is made.
 
-### CreateFileW
+## CreateFileW
 
 ```cpp
 HANDLE CreateFileW(
@@ -29,7 +27,7 @@ HANDLE CreateFileW(
 );
 ```
 
-### CreateFileA
+## CreateFileA
 
 ```cpp
 HANDLE CreateFileA(

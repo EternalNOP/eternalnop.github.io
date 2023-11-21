@@ -70,40 +70,40 @@ After all the instructions are stepped over, all the corresponding registers hol
 
 With the first 4 arguments of CreateFileW in their respective registers, the first CreateFileW can be called that is located in kernel32.dll. When CreateFileW for kernel32.dll is stepped into, it immediately calls another CreateFileW function that is located in kernelbase.dll.
 
-![Disassembly of lpFileName](/assets/img/disassemblylpFileName.png)
+![Disassembly of lpFileName](/assets/img/Win32-API-Callstack/disassemblylpFileName.png)
 
-![lpFileName Stored in RCX](/assets/img/regsitrylpFileName.png)
+![lpFileName Stored in RCX](/assets/img/Win32-API-Callstack/regsitrylpFileName.png)
 
-![CreateFileW Call in kernelbase.dll](/assets/img/kernel32CreateFileW.png)
+![CreateFileW Call in kernelbase.dll](/assets/img/Win32-API-Callstack/kernel32CreateFileW.png)
 
 Decompiling kernel32.dll to find out what happens within that DLL’s CreateFileW shows that another CreateFileW function is called located in API-MS-WIN-CORE-FILE-L1-1-0.dll. PowerShell can be used to find out what this resolves to. To find out more information about what this library is (API Sets) I highly recommend you check out this SpecterOps blog post.
 
 [https://posts.specterops.io/understanding-the-function-call-stack-f08b5341efa4](https://posts.specterops.io/understanding-the-function-call-stack-f08b5341efa4)
 
-![Resolving kernelbase.dll CreateFileW](/assets/img/kernelbaseResolve.png)
+![Resolving kernelbase.dll CreateFileW](/assets/img/Win32-API-Callstack/kernelbaseResolve.png)
 
 The API set resolves to kernelbase.dll which is where a lot of the initialization and preparation of the function begins.
 
-![kernel32.dll CreateFileW Disassembly](/assets/img/kernel32CreateFileWDisassembly.png)
+![kernel32.dll CreateFileW Disassembly](/assets/img/Win32-API-Callstack/kernel32CreateFileWDisassembly.png)
 
 The start of the implementation for CreateFileW starts with kernelbase.dll. Taking a step back to just focus on the callstack process for CreateFileW because reverse engineering every part of the application is out of scope for this topic. The function prepares to be transitioned to kernel mode by converting the lpFileName to its NT path name which ends up being “\\??\\C:\\Users\\Admin\\Desktop\\test.txt”, calling [SbSelectProcedure](http://undoc.airesoft.co.uk/ntdll.dll/SbSelectProcedure.php) within ntdll.dll. The next step is a little unusual which I haven’t seen before when looking at the standard Windows callstack process. In the past within kernelbase.dll, NtCreateFile is called within ntdll.dll, but now NtCreateFile is called within apphelp.dll. Current Microsoft symbols do not show for apphelp.dll but just by observing the disassembly and monitoring the registry values, a high-level overview can be found.
 
-![Untitled](/assets/img/apphelpUndocumentedFunctionCall.png)
+![Untitled](/assets/img/Win32-API-Callstack/apphelpUndocumentedFunctionCall.png)
 
 What the called functions within apphelp.dll do is get the address for NtCreateFile from the address of ntdll.dll and store it within the RAX register. My knowledge of x64 assembly is poor at best so I am not going to attempt to reverse engineer what is entirely happening within apphelp.dll.
 
-![apphelp.dll Storing ntdll.dll Address](/assets/img/apphelpStoreNtdllAddress.png)
+![apphelp.dll Storing ntdll.dll Address](/assets/img/Win32-API-Callstack/apphelpStoreNtdllAddress.png)
 
 Another undocumented function within apphelp.dll is called that just jumps to the value stored within RAX, which is the address of NtCreateFile within ntdll.dll.
 
-![apphelp.dll Call RAX Jump Function](/assets/img/apphelpUndocumentedFunctionCall.png)
+![apphelp.dll Call RAX Jump Function](/assets/img/Win32-API-Callstack/apphelpUndocumentedFunctionCall.png)
 
-![apphelp.dll Function RAX Jump](/assets/img/apphelpJmpRAX.png)
+![apphelp.dll Function RAX Jump](/assets/img/Win32-API-Callstack/apphelpJmpRAX.png)
 
 NtCreateFile is called by moving a decimal value into the EAX register. The value of EAX before syscall is called is the type of function that will be used after transitioning to kernel mode. The values for a lot of syscall values can be found here: [https://j00ru.vexillium.org/syscalls/nt/64/](https://j00ru.vexillium.org/syscalls/nt/64/). In this case the value of 55 is moved into the EAX register which corresponds to NtCreateFile.
 
-![Disassembly of NtCreateFile Syscall](/assets/img/ntCreateFileDisassembly.png)
+![Disassembly of NtCreateFile Syscall](/assets/img/Win32-API-Callstack/ntCreateFileDisassembly.png)
 
 The process so far is listed below
 
-![Userland Callstack Process](/assets/img/userlandCallstack.png)
+![Userland Callstack Process](/assets/img/Win32-API-Callstack/userlandCallstack.png)

@@ -108,12 +108,15 @@ The last argument of the program is the high-order parts of the [FILETIME struct
 
 ![Timestomping Program Usage](/assets/img/Timestomping-101/testFilePowerShellCreateChange.png)
 
-## Ways to Detect Timestomping
+# Who Uses Timestomping
+Various APTs, commercial red teaming tools, and sophisticated attackers have used timestomping techniques in the past. Cobalt Strike has the [timestomp](https://hstechdocs.helpsystems.com/manuals/cobaltstrike/current/userguide/content/topics/post-exploitation_upload-download-files.htm) command that can change the modified, accessed, and created times of one file to another file. Various APTs and sophisticated attackers have used timestomping in their attacks to make their implants blend into their environment, a good examples is [Stuxnet](https://www.wired.com/images_blogs/threatlevel/2011/02/Symantec-Stuxnet-Update-Feb-2011.pdf) that will change the time of 2 malicious drivers that are uploaded to the system to match the time of other files in the same directory. [MITRE](https://attack.mitre.org/techniques/T1070/006/) has a good list of references of what groups have used timestomping in their attacks.
 
-### Win32 Detection
+# Ways to Detect Timestomping
+
+## Win32 Detection
 This detection can be very difficult depending on the implementation of the program. A good indicator is whether or not SetFileTime was implemented correctly is to look at the granular time of the modified times. What this means is sometimes attackers will set the date but not necessarily the specific time. The low order bits of the timestamp might be zeroed out indicating that it was not implemented entirely correctly.
 
-### PowerShell Command History
+## PowerShell Command History
 If a file’s time gets changed via PowerShell, looking at the command history of PowerShell for the user context the command was run in will show the command that was run.
 
 The PowerShell command history can be found here

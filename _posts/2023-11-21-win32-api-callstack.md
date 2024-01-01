@@ -5,7 +5,7 @@ title:  "Win32 API Callstack"
 date:   2023-11-16 17:01:57 +0100
 ---
 
-This blog post will walk through the complete call stack process of calling a Win32 API function and how it transitions to the low-level hard drive driver. This project is compiled with Visual Studio 2022 and run on a standard Windows 11 system.
+This blog post will walk through the complete user-mode call stack process of calling a Win32 API function and how it transitions to kernel mode. Knowing the callstack process of Windows API functions can help a red teamer better understand how and at what level various AVs and EDRs are implemented. This project is compiled with Visual Studio 2022 and run on a standard Windows 11 system.
 
 The API function that will be tested is [CreateFileW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew).
 
@@ -66,11 +66,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 
 The first parameter to CreateFileW is lpFileName which will have the value of “test.txt”. If a full path is not specified, the current directory is where the file will be created. From the screenshot the string (wide char array), a lea instruction is used in order to load the address the string is located at into the RCX register. The second parameter is dwDesiredAccess which technically holds 2 values, GENERIC_READ (80000000) and GENERIC_WRITE (40000000). If both GENERIC_READ and GENERIC_WRITE are XOR’ed, the result is C0000000 which is the value that is stored in EDX via a mov instruction. Both r9d (lower 32-bits of r9) and r8d (lower 32-bits of r8) are XOR’ed with each other to zero out themselves. This makes sense for both the third and fourth parameters of CreateFileW that is 0 for dwShareMode and NULL for lpSecurityAttributes.
 
+![Disassembly of lpFileName](/assets/img/Win32-API-Callstack/disassemblylpFileName.png)
+
 After all the instructions are stepped over, all the corresponding registers hold their respective values. RCX holds “test.txt”, RDX holds C000000, and both R8 and R9 are 0.
 
 With the first 4 arguments of CreateFileW in their respective registers, the first CreateFileW can be called that is located in kernel32.dll. When CreateFileW for kernel32.dll is stepped into, it immediately calls another CreateFileW function that is located in kernelbase.dll.
-
-![Disassembly of lpFileName](/assets/img/Win32-API-Callstack/disassemblylpFileName.png)
 
 ![lpFileName Stored in RCX](/assets/img/Win32-API-Callstack/regsitrylpFileName.png)
 

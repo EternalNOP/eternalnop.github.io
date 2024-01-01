@@ -1,7 +1,5 @@
 main:
-  - title: "Windows Internals"
-    url: /
   - title: "Red Teaming"
-    url: /RedTeaming/
+    url: /
   - title: "Exploitation Development"
     url: /ExploitationDevelopment/

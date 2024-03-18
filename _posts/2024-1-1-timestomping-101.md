@@ -11,7 +11,7 @@ This post will try and be all encompassing about timestomping such as what it is
 ## Different Ways to Perform Timestomping
 Below is a list of some ways to perform timestomping
 * PowerShell
-* SetFileTime
+* GetFileTime/SetFileTime
 
 ### PowerShell
 This is by far the easiest and most straightforward method to changing attributes of a file.
@@ -23,8 +23,29 @@ Get-ChildItem C:\Users\Admin\Desktop\testFile.txt | % {$_.CreationTime = '01/01/
 
 To change a different attribute of the file swap out the CreationTime value to the other possible values such as LastAccessTime and LastWriteTime.
 
+### GetFileTime
+Retrieves the creation, last access, and last written times from a specified file handle. The only security attribute the handle requires is GENERIC_READ.
+```c
+BOOL GetFileTime(
+  [in]            HANDLE     hFile,
+  [out, optional] LPFILETIME lpCreationTime,
+  [out, optional] LPFILETIME lpLastAccessTime,
+  [out, optional] LPFILETIME lpLastWriteTime
+);
+```
+
+This [win32 function](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfiletime) is used in order to retrieve time values that Windows can understand. The FILETIME structure that Windows uses is different than what most of us are familiar with. It is a “64-bit value representing the number of 100-nanosecond intervals since January 1, 1601 (UTC)”. This is quite different than the standard epoch time that Unix uses of number of seconds from January 1, 1970. The FILETIME structure also is  divided into 2 DWORD elements of dwLowDateTime and dwHighDateTime. In order to accurately change both values the documentation recommends copying the values into a ULARGE_INTEGER and then performing some arithmetic on the QuadPart member.
+```c
+typedef struct _FILETIME {
+  DWORD dwLowDateTime;
+  DWORD dwHighDateTime;
+} FILETIME, *PFILETIME, *LPFILETIME;
+```
+
+Doing 64-bit arithmetic to manually set both elements in a FILETIME structure is outside the scope of this post and not needed when GetFileTime and SetFileTime both understand and use the FILETIME structure.
+
 ### SetFileTime
-Using the Win32 API function SetFileTime it is possible to change the created, last accessed, or last modified time.
+Using the Win32 API function [SetFileTime](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfiletime) it is possible to change the created, last accessed, or last modified time based on a valid handle that has the GENERIC_WRITE attribute.
 ```c
 BOOL SetFileTime(
   [in]           HANDLE         hFile,
@@ -34,79 +55,23 @@ BOOL SetFileTime(
 );
 ```
 
-Below is a simple program I created to change the timestamp of a targeted file
+A snippet of the use of GetFileTime and SetFileTime is shown below. The full project can be found on my [GitHub](https://github.com/EternalNOP/Timestomping).
 ```c
-#include <Windows.h>
-#include <stdio.h>
+printf("[+] Retreiving all file times\n");
+if(GetFileTime(inFile, &creationTime, &lastAccessTime, &lastWriteTime) == 0) {
+	printf("Error retreiving file information: %d\n", GetLastError());
+	return 1;
+}
 
-int main(int argc, char *argv[]) {
-	if (argc != 4) {
-		printf("Usage: timestomp.exe <file> <method> <time>\n1 = Creation Time\n2 = Last Access Time\n3 = Last Write Time");
-		exit(0);
-	}
-
-	printf("[+] Attempting to change time of file %s\n", argv[1]);
-
-	//Open handle to target file with required permissions
-	HANDLE hFile = NULL;
-	hFile = CreateFileA(argv[1], FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	FILETIME createTime, accessTime, lastWriteTime;
-	int changedTime, method, retValue = 0;
-	
-	//Convert program arguments to int types
-	method = atoi(argv[2]);
-	changedTime = atoi(argv[3]);
-
-	//Change file time based on method choice
-	switch (method) {
-		case 1:
-			printf("[+] Changing create time\n");
-			createTime.dwHighDateTime = changedTime;
-			retValue = SetFileTime(hFile, &changedTime, NULL, NULL);
-			break;
-		case 2:
-			printf("[+] Changing access time\n");
-			accessTime.dwHighDateTime = changedTime;
-			retValue = SetFileTime(hFile, NULL, &changedTime, NULL);
-			break;
-		case 3:
-			printf("[+] Changing last write time\n");
-			lastWriteTime.dwHighDateTime = changedTime;
-			retValue = SetFileTime(hFile, NULL, NULL, &changedTime);
-			break;
-		default:
-			printf("[+] Invalid choice.\n");
-			break;
-	}
+printf("[+] Successfully retreived file times\n");
 
 
-	if (retValue != 0) {
-		printf("[+] File time successfully changed\n");
-		CloseHandle(hFile);
-		exit(0);
-	}
-	else {
-		printf("[+] Changing file time failed\n");
-		CloseHandle(hFile);
-		exit(1);
-	}
+printf("[+] Writing all times to output file\n");
+if (SetFileTime(outFile, &creationTime, &lastAccessTime, &lastWriteTime) == 0) {
+	printf("[+] Error writing to output file: %d\n", GetLastError());
+	return 2;
 }
 ```
-
-![Timestomping Program Usage](/assets/img/Timestomping-101/timestompingUsage.png)
-
-A test text file is created, the example program will change the create time of the file to April 11, 2024. This program has the capability to change the created, modified, and access time.
-
-![Timestomping Program Usage](/assets/img/Timestomping-101/testFile.png)
-
-As this program was created as a proof of concept, the caveat is precision of the time that the file is changed to.
-
-![Timestomping Program Usage](/assets/img/Timestomping-101/timestompingSuccessfulChange.png)
-
-The last argument of the program is the high-order parts of the [FILETIME structure](https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-filetime). This structure uses time based on 100-nanosecond intervals since January 1, 1601 (UTC).
-
-![Timestomping Program Usage](/assets/img/Timestomping-101/testFilePowerShellCreateChange.png)
 
 # Who Uses Timestomping
 Various APTs, commercial red teaming tools, and sophisticated attackers have used timestomping techniques in the past. Cobalt Strike has the [timestomp](https://hstechdocs.helpsystems.com/manuals/cobaltstrike/current/userguide/content/topics/post-exploitation_upload-download-files.htm) command that can change the modified, accessed, and created times of one file to another file. Various APTs and sophisticated attackers have used timestomping in their attacks to make their implants blend into their environment, a good examples is [Stuxnet](https://www.wired.com/images_blogs/threatlevel/2011/02/Symantec-Stuxnet-Update-Feb-2011.pdf) that will change the time of 2 malicious drivers that are uploaded to the system to match the time of other files in the same directory. [MITRE](https://attack.mitre.org/techniques/T1070/006/) has a good list of references of what groups have used timestomping in their attacks.
@@ -114,7 +79,40 @@ Various APTs, commercial red teaming tools, and sophisticated attackers have use
 # Ways to Detect Timestomping
 
 ## Win32 Detection
-This detection can be very difficult depending on the implementation of the program. A good indicator is whether or not SetFileTime was implemented correctly is to look at the granular time of the modified times. What this means is sometimes attackers will set the date but not necessarily the specific time. The low order bits of the timestamp might be zeroed out indicating that it was not implemented entirely correctly.
+This detection can be very difficult depending on the implementation of the program. A good indicator can be two files within the same directory that have the exact same creation, written, and access times. The biggest limitation that this program currently has is it doesn’t create a random offset based on an input file to write it to the destination file. I leave that as an assignment to the reader.
+
+This is dependent on the environment setup but [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) has an [event ID](https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventid=90002) if a process changed the creation time of another file.
+
+A test text file is created, the example program has multiple options to change either all times from a specified input file or specifically selecting just one attribute. In order to see if Sysmon can correctly detect timestomping, the text file times will be changed to the Microsoft Edge shortcut file located in the same directory.
+
+![Microsoft Edge LNK Time](/assets/img/Timestomping-101/EdgeLNK.png)
+
+Below is the command-line arguments used for the Timestomping.exe application
+
+```
+Timestomping.exe
+Usage: timestomp.exe <method> <input file> <output file>
+method  1 = All available timestamps
+        2 = CreationTime
+        3 = AccessTime
+        4 = LastWriteTime
+
+
+Timestomping.exe 1 "Microsoft Edge.lnk" test.txt
+```
+
+![Modified TXT Time](/assets/img/Timestomping-101/ModifiedTXT.png)
+
+The affected test.txt file had all of their times changed to by the same as the Microsoft Edge LNK file. Using a slightly modified version of a [recommended baseline](https://github.com/SwiftOnSecurity/sysmon-config) Sysmon configuration file, an alert ID of 2 was generated by Sysmon.
+
+In order to detect timestomping for text files, the below line was added to the configuration file under the FileCreateTime rule section.
+```
+<TargetFilename name="T1099" condition="end with">.txt</TargetFilename>
+```
+
+The downside for this detection is that without specific system policy changes, Sysmon cannot log command-line arguments. This is outside the scope of this post but Microsoft does provide [documentation](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/component-updates/command-line-process-auditing) on how to set that up.
+
+To circumvent being caught by this logging activity, an attacker may only write the last accessed and last written time. This somewhat defeats the purpose as those times are more subject to change than the creation time.
 
 ## PowerShell Command History
 If a file’s time gets changed via PowerShell, looking at the command history of PowerShell for the user context the command was run in will show the command that was run.

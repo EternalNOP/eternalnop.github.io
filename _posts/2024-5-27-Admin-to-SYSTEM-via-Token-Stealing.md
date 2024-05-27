@@ -2,7 +2,7 @@
 layout: single
 classes: wide
 title:  "Admin to SYSTEM via Token Stealing"
-date:   2024-1-1 12:01:57 +0100
+date:   2024-5-27 12:01:57 +0100
 ---
 
 For this research project I wanted to figure out how I could get from Administrator to SYSTEM. Although being apart of the Administrators group grants you a lot of privileges, there are still some things that Windows prevents you from doing. A good example is trying to view HKLM\SAM or HKLM\SECURITY via Registry Editor.

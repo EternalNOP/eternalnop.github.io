@@ -129,7 +129,7 @@ It shows various groups and privileges that are assigned to the process. The val
 
 ### Primary vs Impersonation Tokens
 
-A primary token is tied to a process while an impersonation token is tied to a thread. DuplicateTokenEx can be used in order to convert between the two if need be.
+A primary token is tied to the security context of the user account associated with the process. An impersonation token is can be used to change the security context of a thread to a different user. DuplicateTokenEx can be used in order to convert between the two if need be. A good example of where this is used is a server application that impersonates the security context of clients that connect to the server to perform some type of operation.
 
 When attempting to use DuplicateToken instead of DuplicateTokenEx, an access denied error (5) is given when attempting to create a new process with the duplicated token. This is because DuplicateToken only produces impersonation tokens and in order to create a new process using CreateProcessWithTokenW, it requires a primary token. A primary token can be duplicated using DuplicatTokenEx by specifying the TokenType parameter to a [TOKEN_TYPE](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ne-winnt-token_type) variable and setting it to TokenPrimary.
 

@@ -255,7 +255,7 @@ I chose to copy the primary token of the lsass.exe process (PID of 1292 in this 
 
 ![Access Denied to Protected Process](/assets/img/Admin-to-SYSTEM-via-Token-Stealing/protectedProcessAccessDenied.png)
 
-This derives from what’s called protected processes. Windows Internals Part 1 7th Edition sums it up "These processes exist alongside normal Windows processes, but they add significant constraints to the access rights that other processes on the system (even when running with administrative privileges) can request.” Getting into the details of protected processes is outside the scope of this post.
+This error occurs even when SeDebugPrivilege is enabled because according to Microsoft's documentation, "If the specified process is the System Idle Process (0x00000000), the function fails and the last error code is ERROR_INVALID_PARAMETER. If the specified process is the System process or one of the Client Server Run-Time Subsystem (CSRSS) processes, this function fails and the last error code is ERROR_ACCESS_DENIED because their access restrictions prevent user-level code from opening them."
 
 ## Key Takeaway
 It is important to remember if covertness is key when going from Admin to SYSTEM via token stealing, don’t open HANDLES to processes that are heavily monitored by EDRs such as Lsass. Usually the calling process is instantly killed or an alert is generated and that could lead to your activity being detected. Opening a HANDLE to a SYSTEM process that isn’t as heavily monitored or indicative of malicious activity will decrease the likelihood of your activity being detected.

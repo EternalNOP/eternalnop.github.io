@@ -3,7 +3,7 @@ description: >- # this means to ignore newlines until "baseurl:"
   NOP's blog about Windows Internals, Exploitation Development, and Red Teaming.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://eternalnop.github.io" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: eternalnop
+twitter_username: eternal_nop
 github_username:  eternalnop
 repository: eternalnop/eternalnop.github.io
 
@@ -21,7 +21,7 @@ author:
     I am a penetration tester specializing in internal network assessments with a strong interest in Red Teaming and Exploitation Development.
   location         : "127.0.0.1"
   github           : eternalnop
-  twitter          : eternalnop
+  twitter          : eternal_nop
 
 
 # Reading Files

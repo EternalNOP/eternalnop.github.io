@@ -320,13 +320,13 @@ What is listed below is the configuration of the filter being created.
 FWPM_FILTER filter = {
 	.displayData.name			= L"MonitorDriver",
 	.displayData.description	= L"MonitorDriverDescription",
-	.layerKey					= FWPM_LAYER_STREAM_V4,	             //Needs to work on the same layer as our added callout
-	.subLayerKey				= SUB_LAYER_GUID,					 //Unique GUID that identifies the sublayer, GUID needs to be the same as the GUID of the added sublayer
-	.weight						= weight,							 //Weight variable, higher weight means higher priority
-	.numFilterConditions		= ARRAYSIZE(conditions),			 //Number of filter conditions (0 because conditions variable is empty)
-	.filterCondition			= conditions,						 //Empty conditions structure (we don't want to do any filtering)	
-	.action.type				= FWP_ACTION_CALLOUT_TERMINATING,	 //We only want to inspect the packet (https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_action0)
-	.action.calloutKey			= CALLOUT_GUID						 //Unique GUID that identifies the callout, GUID needs to be the same as the GUID of the added callout
+	.layerKey					= FWPM_LAYER_STREAM_V4,				//Needs to work on the same layer as our added callout
+	.subLayerKey				= SUB_LAYER_GUID,					//Unique GUID that identifies the sublayer, GUID needs to be the same as the GUID of the added sublayer
+	.weight						= weight,							//Weight variable, higher weight means higher priority
+	.numFilterConditions		= ARRAYSIZE(conditions),			//Number of filter conditions (0 because conditions variable is empty)
+	.filterCondition			= conditions,						//Empty conditions structure (we don't want to do any filtering)	
+	.action.type				= FWP_ACTION_CALLOUT_TERMINATING,	//We only want to inspect the packet (https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_action0)
+	.action.calloutKey			= CALLOUT_GUID						//Unique GUID that identifies the callout, GUID needs to be the same as the GUID of the added callout
 };
 ```
 

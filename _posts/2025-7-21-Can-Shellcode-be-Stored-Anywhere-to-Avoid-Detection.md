@@ -5,8 +5,6 @@ title:  "Can Shellcode be Stored Anywhere to Avoid Detection?"
 date:   2025-7-21 17:01:55 +0100
 ---
 
-## Introduction
-
 The purpose of this post is to research and show how the detection of shellcode has evolved over time and if there are best practices today to avoid being detected if using raw shellcode. Shellcode, often written in machine code or assembly, is essentially a payload crafted to exploit a vulnerability within a targeted application. The payload can range from something simple as opening calculator.exe or something complex such as spawning a reverse remote shell. First I will go over disk vs memory shellcode and the various detection rates of each of them. I will create a simple client/server application that will send shellcode over the network from the client and be executed on the server in memory.
 
 ## Disk Detection vs Memory Detection
@@ -310,30 +308,25 @@ The functionality in what a WFP filter can do is determined by a member in the [
 
 | Value | Meaning |
 | --- | --- |
-| **FWP_ACTION_BLOCK** | Block the traffic.
-0x00000001 | FWP_ACTION_FLAG_TERMINATING |
-| **FWP_ACTION_PERMIT** | Permit the traffic.
-0x00000002 | FWP_ACTION_FLAG_TERMINATING |
-| **FWP_ACTION_CALLOUT_TERMINATING** | Invoke a callout that always returns block or permit.
-0x00000003 | FWP_ACTION_FLAG_CALLOUT | FWP_ACTION_FLAG_TERMINATING |
-| **FWP_ACTION_CALLOUT_INSPECTION** | Invoke a callout that never returns block or permit.
-0x00000004 | FWP_ACTION_FLAG_CALLOUT | FWP_ACTION_FLAG_NON_TERMINATING |
-| **FWP_ACTION_CALLOUT_UNKNOWN** | Invoke a callout that may return block or permit.
-0x00000005 | FWP_ACTION_FLAG_CALLOUT |
+| **FWP_ACTION_BLOCK** | Block the traffic.0x00000001 - FWP_ACTION_FLAG_TERMINATING |
+| **FWP_ACTION_PERMIT** | Permit the traffic.0x00000002 - FWP_ACTION_FLAG_TERMINATING |
+| **FWP_ACTION_CALLOUT_TERMINATING** | Invoke a callout that always returns block or permit.0x00000003 - FWP_ACTION_FLAG_CALLOUT - FWP_ACTION_FLAG_TERMINATING |
+| **FWP_ACTION_CALLOUT_INSPECTION** | Invoke a callout that never returns block or permit.0x00000004 - FWP_ACTION_FLAG_CALLOUT - FWP_ACTION_FLAG_NON_TERMINATING |
+| **FWP_ACTION_CALLOUT_UNKNOWN** | Invoke a callout that may return block or permit.0x00000005 - FWP_ACTION_FLAG_CALLOUT |
 
 What is listed below is the configuration of the filter being created.
 
 ```c
 FWPM_FILTER filter = {
-	.displayData.name			    = L"MonitorDriver",
+	.displayData.name			= L"MonitorDriver",
 	.displayData.description	= L"MonitorDriverDescription",
-	.layerKey					        = FWPM_LAYER_STREAM_V4,	            //Needs to work on the same layer as our added callout
-	.subLayerKey				      = SUB_LAYER_GUID,					          //Unique GUID that identifies the sublayer, GUID needs to be the same as the GUID of the added sublayer
-	.weight						        = weight,							              //Weight variable, higher weight means higher priority
-	.numFilterConditions		  = ARRAYSIZE(conditions),					  //Number of filter conditions (0 because conditions variable is empty)
-	.filterCondition			    = conditions,						            //Empty conditions structure (we don't want to do any filtering)	
-	.action.type				      = FWP_ACTION_CALLOUT_TERMINATING,	  //We only want to inspect the packet (https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_action0)
-	.action.calloutKey			  = CALLOUT_GUID						          //Unique GUID that identifies the callout, GUID needs to be the same as the GUID of the added callout
+	.layerKey					= FWPM_LAYER_STREAM_V4,	             //Needs to work on the same layer as our added callout
+	.subLayerKey				= SUB_LAYER_GUID,					 //Unique GUID that identifies the sublayer, GUID needs to be the same as the GUID of the added sublayer
+	.weight						= weight,							 //Weight variable, higher weight means higher priority
+	.numFilterConditions		= ARRAYSIZE(conditions),			 //Number of filter conditions (0 because conditions variable is empty)
+	.filterCondition			= conditions,						 //Empty conditions structure (we don't want to do any filtering)	
+	.action.type				= FWP_ACTION_CALLOUT_TERMINATING,	 //We only want to inspect the packet (https://learn.microsoft.com/en-us/windows/win32/api/fwpmtypes/ns-fwpmtypes-fwpm_action0)
+	.action.calloutKey			= CALLOUT_GUID						 //Unique GUID that identifies the callout, GUID needs to be the same as the GUID of the added callout
 };
 ```
 

@@ -1,8 +1,8 @@
 ---
 layout: single
 classes: wide
-title:  "Can Shellcode be Stored Anywhere to Avoid Detection?"
-date:   2025-7-21 17:01:55 +0100
+title:  "Modern Approach to Defeating EDRs"
+date:   2026-5-27 13:30:55 +0100
 ---
 
 # Modern Approach to Defeating EDRs

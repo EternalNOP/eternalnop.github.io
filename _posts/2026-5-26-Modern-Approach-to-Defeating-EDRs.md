@@ -5,8 +5,6 @@ title:  "Modern Approach to Defeating EDRs"
 date:   2026-5-27 13:30:55 +0100
 ---
 
-# Modern Approach to Defeating EDRs
-
 ### Disclaimer
 
 This is not a full-proof bypass for every EDR. This post is designed to understand how EDRs work and common bypasses that have evolved over time. Much of the introductory knowledge I have learned about EDRs is from [Matt Hands](https://x.com/matterpreter) [EDR Evasion book](https://nostarch.com/evading-edr), I would highly recommend anyone interesting in EDR evasion read it.

@@ -296,7 +296,7 @@ This technique involves mapping a clean ntdll that doesn’t have any detours fr
 // Get the base address of ntdll in the current process
 status = GetModuleInformation(GetCurrentProcess(), GetModuleHandle(L"ntdll.dll"), &mi, sizeof(mi));
 if (status == 0) {
-    wprintf(L"GetModuleInformation failed with error: %d", GetLastError()");
+    wprintf(L"GetModuleInformation failed with error: %d", GetLastError());
     return 1;
 }
 
